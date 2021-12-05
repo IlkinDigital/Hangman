@@ -17,35 +17,35 @@ namespace Hangman { namespace Exception
 		int m_ErrorCode;
 	};
 
-	class PlayerSessionReaddition : Base
+	class PlayerSessionReaddition : public Base
 	{
 	public:
 		PlayerSessionReaddition()
 			: Base("Player can only be added to the same game session once.") {}
 	};
 
-	class OnlyBeforeGameStarts : Base
+	class OnlyBeforeGameStarts : public Base
 	{
 	public:
 		OnlyBeforeGameStarts()
 			: Base("Can only use the specified method before game session starts.") {}
 	};
 
-	class OnlyAfterGameStarts : Base
+	class OnlyAfterGameStarts : public Base
 	{
 	public:
 		OnlyAfterGameStarts()
 			: Base("Can only use the specified method after game session starts.") {}
 	};	
 	
-	class InvalidLetter : Base
+	class InvalidLetter : public Base
 	{
 	public:
 		InvalidLetter()
 			: Base("Specified letter is invalid.") {}
 	};
 
-	class WordIsUndefined : Base
+	class WordIsUndefined : public Base
 	{
 	public:
 		WordIsUndefined()

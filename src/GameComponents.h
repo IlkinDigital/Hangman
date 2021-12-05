@@ -63,18 +63,24 @@ namespace Hangman
 
 		void SetRandomWord();
 
+		std::string GetWord() const { return m_Word; }
+
 		bool IsInSession(const Player& player) const;
-		bool IsSessionActive() const { return m_GameStartFlag; }
+		bool IsSessionActive() const { return m_GameStarted; }
 		bool IsLetterValid(char letter) const;
 
 		void Start();
+
+		void NextPlayer();
+
+		bool SmartGuess();
 
 		bool WinCheck() const;
 
 	public: // After game starts
 
 		virtual void DrawHangman() const;
-		virtual void DrawWord() const;
+		virtual void DrawWord() const;	
 		virtual void DrawAvailableLetters() const;
 
 		void Stop();
@@ -83,6 +89,7 @@ namespace Hangman
 
 		void AddPlayer(Player* player);
 		void RemovePlayer(const Player& player);
+
 	private:
 		static const char* s_DictionaryPath;
 		static size_t s_DictionaryWords;
@@ -95,12 +102,13 @@ namespace Hangman
 		bool IncrementStage();
 	private:
 		std::vector<Player*> m_Players;
+		size_t m_CurrentPlayerIndex;
 		std::array<char, 26> m_AvailableLetters;
 		// TODO: Add m_Word and m_View into a hangman::word class
 		std::string m_Word;
 		std::vector<bool> m_View;
 		Stage m_HangmanStage;
-		bool m_GameStartFlag;
+		bool m_GameStarted;
 	};
 
 }

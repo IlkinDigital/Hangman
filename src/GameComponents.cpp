@@ -5,6 +5,7 @@ namespace Hangman
     int Player::s_UUID = 0;
 
     const char* GameSession::s_DictionaryPath = "res/Dict.txt";
+    size_t GameSession::s_DictionaryWords = 0;
     size_t const GameSession::s_Stages = 10;
     char GameSession::s_DrawingSymbol = '*';
 
@@ -12,15 +13,15 @@ namespace Hangman
     {
         m_AvailableLetters = ALPHABET;
         m_HangmanStage = Stage::None;
-        m_GameStartFlag = false;
+        m_GameStarted = false;
 
         m_Players.clear();
 
-        ParseDictionary();
+        s_DictionaryWords = ParseDictionary();
     }
     void GameSession::AddPlayer(Player* player)
     {
-        if (m_GameStartFlag)
+        if (m_GameStarted)
             throw Exception::OnlyBeforeGameStarts();
 
         if (!IsInSession(*player))
@@ -30,7 +31,25 @@ namespace Hangman
     }
     std::string GameSession::GetRandomWord()
     {
-        return "testing";
+        srand(time(NULL));
+
+        size_t randint = rand() % s_DictionaryWords;
+        size_t counter = 0;
+
+        std::ifstream file;
+
+        // TODO: Handle unable to open file error
+        file.open(s_DictionaryPath, std::ios::in);
+
+        std::string line = "placeholder";
+        while (std::getline(file, line))
+        {
+            if (counter == randint)
+                return line;
+            counter++;
+        }
+
+        return line;
     }
     size_t GameSession::ParseDictionary() const
     {
@@ -77,22 +96,27 @@ namespace Hangman
             if (m_Word[i] == letter)
             {
                 m_View[i] = true;
-                m_AvailableLetters[letter - 'a'] = 0;
                 guessCheck = true;
             }
         }
+
+        m_AvailableLetters[letter - 'a'] = 0;
 
         return guessCheck ? true : IncrementStage();
     }
     bool GameSession::IncrementStage()
     {
+        if (!m_GameStarted)
+            throw Exception::OnlyAfterGameStarts();
+
+        m_HangmanStage = (Stage)((int)m_HangmanStage + 1);
+
         if (m_HangmanStage == Stage::RightLeg)
         {
-            Stop();
             return false;
         }
 
-        m_HangmanStage = (Stage)((int)m_HangmanStage + 1);
+        return true;
     }
     void GameSession::SetRandomWord()
     {
@@ -127,20 +151,45 @@ namespace Hangman
             throw Exception::WordIsUndefined();
         // TODO: Add an m_View check
 
-        m_GameStartFlag = true;
+        m_GameStarted = true;
+        m_CurrentPlayerIndex = 0;
+    }
+
+    void GameSession::NextPlayer()
+    {
+        if (m_CurrentPlayerIndex + 1 == m_Players.size())
+            m_CurrentPlayerIndex = 0;
+        else
+            m_CurrentPlayerIndex++;
+    }
+
+    bool GameSession::SmartGuess()
+    {
+        try
+        {
+            return Guess(m_Players[m_CurrentPlayerIndex]->RequestLetter());
+        }
+        catch (Exception::Base e)
+        {
+            std::cout << e.Message() << std::endl;
+        }
+
+        return true;
     }
 
     bool GameSession::WinCheck() const
     {
         for (const auto& item : m_View)
-            if (item)
+        {
+            if (!item)
                 return false;
+        }
         return true;
     }
 
     void GameSession::DrawHangman() const
     {
-        if (!m_GameStartFlag)
+        if (!m_GameStarted)
             throw Exception::OnlyAfterGameStarts();
 
         char s[(size_t)s_Stages]{}; // Stage symbols
@@ -191,21 +240,37 @@ namespace Hangman
         for (size_t i = 0; i < m_View.size(); i++)
         {
             if (m_View[i])
+                std::cout << m_Word[i] << ' ';
+            else
+                std::cout << "_ ";
         }
+
+        std::cout << std::endl;
     }
 
     void GameSession::DrawAvailableLetters() const
     {
-        if (!m_GameStartFlag)
+        if (!m_GameStarted)
             throw Exception::OnlyAfterGameStarts();
+
+        for (size_t i = 0; i < m_AvailableLetters.size() / 2; i++)
+        {
+            std::cout << (m_AvailableLetters[i] ? m_AvailableLetters[i] : ' ') << ' ';
+        }
+        std::cout << std::endl;
+        for (size_t i = m_AvailableLetters.size() / 2; i < m_AvailableLetters.size(); i++)
+        {
+            std::cout << (m_AvailableLetters[i] ? m_AvailableLetters[i] : ' ') << ' ';
+        }
+        std::cout << std::endl;
     }
 
     void GameSession::Stop()
     {
-        if (!m_GameStartFlag)
+        if (!m_GameStarted)
             throw Exception::OnlyAfterGameStarts();
 
-        m_GameStartFlag = false;
+        m_GameStarted = false;
         m_AvailableLetters = ALPHABET;
         m_Word.clear();
         m_View.clear();
@@ -215,7 +280,7 @@ namespace Hangman
     char Player::RequestLetter() const
     {
         char letter;
-        std::cout << "Enter the letter you want to guess: ";
+        std::cout << "[" << m_Name << "]: Enter the letter you want to guess: ";
         std::cin >> letter;
 
         // TODO: Add std::cin crash check
