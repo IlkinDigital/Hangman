@@ -32,15 +32,40 @@ namespace Hangman
 		std::string m_Name;
 	};
 
+	class Word
+	{
+	public:
+		Word() = default;
+		Word(const std::string& str) { SetWord(str); }
+
+		size_t Size() const { return m_Word.size(); }
+		bool IsEmpty() const { return m_Word.empty() || m_View.empty(); }
+
+		void SetWord(const std::string& word);
+
+		void EnableView(size_t index)  { m_View[index] = true;  }
+		void DisableView(size_t index) { m_View[index] = false; }
+
+		char At(size_t index) const { return m_Word[index]; }
+		bool GetView(size_t index) const { return m_View[index]; }
+
+		std::string GetWord() const { return m_Word; }
+
+		void Clear() { m_Word.clear(); m_View.clear(); }
+
+	private:
+		std::string m_Word;
+		std::vector<bool> m_View;
+	};
+
 	class GameSession
 	{
 	public:
-		static size_t const s_Stages;
-		static char s_DrawingSymbol;
-
 		enum class Stage { None = 0, Base, Pole1, Pole2, Rope, 
 						   Head, Body, LeftArm, RightArm, LeftLeg, RightLeg };
 
+		static size_t const s_Stages;
+		static char s_DrawingSymbol;
 	public:
 		static void SetDictionaryPath(const char* filepath) { s_DictionaryPath = filepath; }
 
@@ -63,7 +88,7 @@ namespace Hangman
 
 		void SetRandomWord();
 
-		std::string GetWord() const { return m_Word; }
+		std::string GetWord() const { return m_Word.GetWord(); }
 
 		bool IsInSession(const Player& player) const;
 		bool IsSessionActive() const { return m_GameStarted; }
@@ -88,7 +113,7 @@ namespace Hangman
 	public: // Before game starts
 
 		void AddPlayer(Player* player);
-		void RemovePlayer(const Player& player);
+		void RemovePlayer(Player* player);
 
 	private:
 		static const char* s_DictionaryPath;
@@ -104,9 +129,7 @@ namespace Hangman
 		std::vector<Player*> m_Players;
 		size_t m_CurrentPlayerIndex;
 		std::array<char, 26> m_AvailableLetters;
-		// TODO: Add m_Word and m_View into a hangman::word class
-		std::string m_Word;
-		std::vector<bool> m_View;
+		Word m_Word;
 		Stage m_HangmanStage;
 		bool m_GameStarted;
 	};

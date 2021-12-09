@@ -61,7 +61,7 @@ affect
 afford
 afraid
 african
-african-American
+american
 after
 afternoon
 again
@@ -1285,7 +1285,6 @@ missile
 mission
 mistake
 mixture
-mm-hmm
 model
 moderate
 modern

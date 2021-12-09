@@ -24,6 +24,13 @@ namespace Hangman { namespace Exception
 			: Base("Player can only be added to the same game session once.") {}
 	};
 
+	class InvalidPlayerRemoval : public Base
+	{
+	public:
+		InvalidPlayerRemoval()
+			: Base("Cannot remove nonexistent player.") {}
+	};
+
 	class OnlyBeforeGameStarts : public Base
 	{
 	public:

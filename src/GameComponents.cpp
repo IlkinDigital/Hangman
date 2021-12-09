@@ -24,10 +24,22 @@ namespace Hangman
         if (m_GameStarted)
             throw Exception::OnlyBeforeGameStarts();
 
-        if (!IsInSession(*player))
+        if (IsInSession(*player))
             throw Exception::PlayerSessionReaddition();
 
         m_Players.push_back(player);
+    }
+    void GameSession::RemovePlayer(Player* player)
+    {
+        if (m_GameStarted)
+            throw Exception::OnlyBeforeGameStarts();
+
+        if (!IsInSession(*player))
+            throw Exception::InvalidPlayerRemoval();
+
+        for (size_t i = 0; i < m_Players.size(); i++)
+            if (*m_Players[i] == *player)
+                m_Players.erase(m_Players.begin() + i);
     }
     std::string GameSession::GetRandomWord()
     {
@@ -48,6 +60,8 @@ namespace Hangman
                 return line;
             counter++;
         }
+
+        file.close();
 
         return line;
     }
@@ -72,6 +86,8 @@ namespace Hangman
             }
         }
 
+        ifile.close();
+
         std::ofstream ofile;
 
         // TODO: Handle unable to open file error
@@ -79,7 +95,6 @@ namespace Hangman
 
         ofile << ss.rdbuf();
 
-        ifile.close();
         ofile.close();
 
         return counter;
@@ -91,16 +106,18 @@ namespace Hangman
 
         bool guessCheck = false;
                 
-        for (size_t i = 0; i < m_Word.size(); i++)
+        for (size_t i = 0; i < m_Word.Size(); i++)
         {
-            if (m_Word[i] == letter)
-            {
-                m_View[i] = true;
+            if (m_Word.At(i) == letter)
+            { 
+                m_Word.EnableView(i);
                 guessCheck = true;
             }
         }
 
         m_AvailableLetters[letter - 'a'] = 0;
+
+        NextPlayer();
 
         return guessCheck ? true : IncrementStage();
     }
@@ -121,7 +138,6 @@ namespace Hangman
     void GameSession::SetRandomWord()
     {
         m_Word = GetRandomWord();
-        m_View.resize(m_Word.size());
     }
     bool GameSession::IsInSession(const Player& player) const
     {
@@ -147,7 +163,7 @@ namespace Hangman
 
     void GameSession::Start()
     {
-        if (m_Word.empty())
+        if (m_Word.IsEmpty())
             throw Exception::WordIsUndefined();
         // TODO: Add an m_View check
 
@@ -179,11 +195,9 @@ namespace Hangman
 
     bool GameSession::WinCheck() const
     {
-        for (const auto& item : m_View)
-        {
-            if (!item)
+        for (size_t i = 0; i < m_Word.Size(); i++)
+            if (!m_Word.GetView(i))
                 return false;
-        }
         return true;
     }
 
@@ -237,10 +251,10 @@ namespace Hangman
 
     void GameSession::DrawWord() const
     {
-        for (size_t i = 0; i < m_View.size(); i++)
+        for (size_t i = 0; i < m_Word.Size(); i++)
         {
-            if (m_View[i])
-                std::cout << m_Word[i] << ' ';
+            if (m_Word.GetView(i))
+                std::cout << m_Word.At(i) << ' ';
             else
                 std::cout << "_ ";
         }
@@ -272,8 +286,7 @@ namespace Hangman
 
         m_GameStarted = false;
         m_AvailableLetters = ALPHABET;
-        m_Word.clear();
-        m_View.clear();
+        m_Word.Clear();
         m_HangmanStage = Stage::None;
     }
 
@@ -286,6 +299,13 @@ namespace Hangman
         // TODO: Add std::cin crash check
 
         return letter;
+    }
+
+    void Word::SetWord(const std::string& word)
+    {
+        m_Word = word;
+
+        m_View.resize(word.size(), false);
     }
 
 }

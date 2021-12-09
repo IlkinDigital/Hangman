@@ -37,8 +37,9 @@ namespace Hangman
     void StartGame()
     {
         Player p1("Ilkin");
+        Player p2("Elvin");
 
-        GameSession gs({ &p1 });
+        GameSession gs({ &p1, &p2 });
 
         gs.SetRandomWord();
 
@@ -75,6 +76,10 @@ namespace Hangman
             {
                 hmStatus = gs.SmartGuess();
             }
+
+            std::cout << "Press enter to continue...";
+            std::cin.ignore();
+            std::cin.get();
         }
     }
 }
